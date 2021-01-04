@@ -1,95 +1,91 @@
-import React, { Component } from "react";
-import "./App.css";
-
+import React, { useState, useEffect } from "react";
 import Note from "./Note/Note";
 import NoteForm from "./NoteForm/NoteForm";
 
-import firebase from "firebase/app";
-import { DB_CONFIG } from "./config/config";
-import "firebase/database";
+import "./App.css";
 
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      notes: [
-        //	{noteId: 1, noteContent: 'Note 1'},
-        //	{noteId: 2, noteContent: 'Note 2'}
-      ],
-    };
-    this.addNote = this.addNote.bind(this);
-    this.removeNote = this.removeNote.bind(this);
+import serviceNotes from "./services/notes";
 
-    // db connection
-    this.app = firebase.initializeApp(DB_CONFIG);
-    this.db = this.app.database().ref().child("notes");
-  }
+const App = ({ nombre }) => {
+	const [selectedNoteId, setSelectedNodeId] = useState(0);
+	const [selectedNoteText, setSelectedNodeText] = useState("");
+	const [notes, setNotes] = useState([]);
 
-  componentDidMount() {
-    const { notes } = this.state;
-    this.db.on("child_added", (snap) => {
-      notes.push({
-        noteId: snap.key,
-        noteContent: snap.val().noteContent,
-      });
+	console.log("render");
 
-      this.setState({ notes });
-    });
+	const onDataChange = items => {
+		let newNotes = [];
 
-    this.db.on("child_removed", (snap) => {
-      for (let i = 0; i < notes.length; i++) {
-        if (notes[i].noteId === snap.key) {
-          notes.splice(i, 1);
-        }
-      }
-      this.setState({ notes });
-    });
-  }
+		items.forEach(item => {
+			let key = item.key;
+			let data = item.val();
 
-  addNote(note) {
-    /*
-		let { notes } = this.state;
-		notes.push({
-			noteId: notes.length + 1,
-			noteContent: note
+			newNotes.push({
+				noteId: key,
+				noteContent: data.noteContent,
+			});
 		});
-		this.setState({
-			notes
-		});
-		*/
-    this.db.push().set({ noteContent: note });
-  }
 
-  removeNote(noteId) {
-    this.db.child(noteId).remove();
-  }
+		setNotes(newNotes);
+	};
 
-  render() {
-    return (
-      <div className="notesContainer">
-        <div className="notesHeader">
-          <h1>React and Firebase Notes App</h1>
-        </div>
+	const removeNote = key => {
+		serviceNotes.remove(key);
+	};
 
-        <div className="notesBody">
-          {this.state.notes.map((note) => {
-            return (
-              <Note
-                noteContent={note.noteContent}
-                noteId={note.noteId}
-                key={note.noteId}
-                removeNote={this.removeNote}
-              />
-            );
-          })}
-        </div>
+	const selectNote = (key, text) => {
+		setSelectedNodeId(key);
+		setSelectedNodeText(text);
+	};
 
-        <div className="notesFooter">
-          <NoteForm addNote={this.addNote} />
-        </div>
-      </div>
-    );
-  }
-}
+	const updateNote = noteContent => {
+		if (selectedNoteId === 0) {
+			serviceNotes.create({ noteContent });
+		} else {
+			serviceNotes.update(selectedNoteId, { noteContent });
+		}
+
+		setSelectedNodeId(0);
+		//setSelectedNodeText("");
+	};
+
+	useEffect(() => {
+		serviceNotes.getAll().on("value", onDataChange);
+
+		return () => {
+			serviceNotes.getAll().off("value", onDataChange);
+		};
+	}, []);
+
+	return (
+		<div className="notesContainer">
+			<div className="notesHeader">
+				<h1>React and Firebase Notes App {nombre}</h1>
+			</div>
+
+			<div className="notesBody">
+				{notes.map(note => {
+					return (
+						<Note
+							noteContent={note.noteContent}
+							noteId={note.noteId}
+							key={note.noteId}
+							removeNote={removeNote}
+							clickNote={selectNote}
+						/>
+					);
+				})}
+			</div>
+
+			<div className="notesFooter">
+				<NoteForm
+					addNewNoteFunction={updateNote}
+					noteId={selectedNoteId}
+					textoDeLaNota={selectedNoteText}
+				/>
+			</div>
+		</div>
+	);
+};
 
 export default App;

@@ -1,52 +1,45 @@
-import React, { Component } from 'react';
+import React, {useState, useEffect} from 'react'
 import './NoteForm.css';
 
-class NoteForm extends Component {
-	constructor(props) {
-		super();
-		this.state = {
-			newNoteText: ''
-		};
-		this.handleUserInput = this.handleUserInput.bind(this);
-		this.addNote = this.addNote.bind(this);
+
+const NoteForm = ({noteId, textoDeLaNota, addNewNoteFunction}) => {
+	const [noteText, setNoteText] = useState(textoDeLaNota)
+
+	useEffect(() => {
+		setNoteText(textoDeLaNota)
+	}, [textoDeLaNota]);
+
+	const handleUserInput = e => {
+		setNoteText(e.target.value);
 	}
 
-	handleUserInput(e) {
-		this.setState({
-			newNoteText: e.target.value
-		})
+	// @ts-ignore
+	const addNote = () => {
+		addNewNoteFunction(noteText);
+		setNoteText('');
 	}
 
-	addNote() {
-		this.props.addNote(this.state.newNoteText);
-		this.setState({
-			newNoteText: ''
-		});
-		this.textInput.focus();
-	}
-
-	componentDidMount() {
-		this.textInput.focus();
-	}
-
-	render() {
-		return (
-			<div className="NoteForm">
+	return (
+		<div className="NoteForm">
 				<input
-					placeholder="Write a new Note"
+					type="hidden"
+					value={noteId}
+					/>
+				<input
+					placeholder="Escriba una nota"
 					className="noteInput"
-					ref={input => { this.textInput = input;}}
-					value={this.state.newNoteText}
-					onChange={this.handleUserInput}
+					value={noteText}
+					onChange={handleUserInput}
 					type="text"/>
-				<button 
-					onClick={this.addNote}
+
+				<button
+					// @ts-ignore
+					onClick={addNote}
 					className="noteButton">
-					Add Note
+					Añadir/Modificar
 				</button>
 			</div>
-		)
-	}
+	)
 }
 
-export default NoteForm;
+export default NoteForm

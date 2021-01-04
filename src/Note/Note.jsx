@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import './Note.css';
-import PropTypes from 'prop-types';
 
 class Note extends Component {
-	
+
 	constructor(props) {
 		super(props);
 		this.noteContent = props.noteContent;
@@ -14,24 +13,25 @@ class Note extends Component {
 		this.props.removeNote(id);
 	}
 
+	handleClickNote(id, noteContent)
+	{
+		this.props.clickNote(id, noteContent)
+	}
+
 	render(props) {
 		return (
 			<div className="Note">
-				<span
+				<div
 					className="btn-close"
 					onClick={() => this.handleRemoveNote(this.noteId)}
 				>
-				&times;	
-				</span>
-				<p>{this.noteContent}</p>
+				&times;
+				</div>
+				<div className="noteContent" onClick={() => this.handleClickNote(this.noteId, this.noteContent)}>{this.noteContent}</div>
 			</div>
 		)
 	}
 
 }
-
-Note.PropTypes = {
-	noteContent: PropTypes.String	
-};
 
 export default Note;
